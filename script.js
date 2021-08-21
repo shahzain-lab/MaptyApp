@@ -66,12 +66,19 @@ class App {
   //Private fields
   #map;
   #mapEvent;
-  #workout = [];
+  #workouts = [];
+  #mapZoomLevel = 13;
 
   constructor() {
     this._getPosition();
+
+    // getLocalStorage
+    this._getLocalStorage();
+
+    //Events handler
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
+    containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
   }
 
   _getPosition() {
@@ -91,7 +98,7 @@ class App {
 
     const coords = [latitude, longitude];
 
-    this.#map = L.map('map').setView(coords, 13);
+    this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
 
     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       attribution:
@@ -99,6 +106,10 @@ class App {
     }).addTo(this.#map);
 
     this.#map.on('click', this._showForm.bind(this));
+
+    this.#workouts.forEach(work => {
+      this._renderWorkoutMarker(work);
+    });
   }
 
   _showForm(mapEve) {
@@ -162,12 +173,12 @@ class App {
       workout = new Cycling([lat, lng], distance, duration, elevation);
     }
 
-    this.#workout.push(workout);
+    this.#workouts.push(workout);
     // render workout in map as marker
     this._renderWorkoutMarker(workout);
 
     // render workout list
-    this._renderWorkoutList(workout);
+    this._renderWorkout(workout);
   }
 
   _renderWorkoutMarker(workout) {
@@ -189,9 +200,12 @@ class App {
 
     //clear value + form
     this._hideForm();
+
+    //set localStorage
+    this._setLocalStorage();
   }
 
-  _renderWorkoutList(workout) {
+  _renderWorkout(workout) {
     let html = `
     <li class="workout workout--${workout.type}" data-id="${workout.id}">
     <h2 class="workout__title">${workout.description}</h2>
@@ -241,6 +255,36 @@ class App {
     `;
 
     form.insertAdjacentHTML('afterend', html);
+  }
+
+  _moveToPopup(e) {
+    const workoutEL = e.target.closest('.workout');
+
+    if (!workoutEL) return;
+    const workout = this.#workouts.find(
+      work => work.id === workoutEL.dataset.id
+    );
+
+    this.#map.setView(workout.coords, this.#mapZoomLevel, {
+      animate: true,
+      pan: {
+        duration: 1,
+      },
+    });
+  }
+
+  _setLocalStorage() {
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+
+  _getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem('workouts'));
+
+    this.#workouts = data;
+
+    this.#workouts.forEach(work => {
+      this._renderWorkout(work);
+    });
   }
 }
 
