@@ -158,7 +158,7 @@ class App {
         !inputValid(distance, duration, cadence) ||
         !allPositive(distance, duration, cadence)
       )
-        return alert('input have to be postive number');
+        return alert('inputs should contain correct values');
       workout = new Running([lat, lng], distance, duration, cadence);
     }
 
@@ -169,7 +169,7 @@ class App {
         !inputValid(distance, duration, elevation) ||
         !allPositive(distance, duration)
       )
-        return alert('input have to be postive number');
+        return alert('inputs should contain correct values');
       workout = new Cycling([lat, lng], distance, duration, elevation);
     }
 
@@ -279,7 +279,7 @@ class App {
 
   _getLocalStorage() {
     const data = JSON.parse(localStorage.getItem('workouts'));
-
+if (!data) return
     this.#workouts = data;
 
     this.#workouts.forEach(work => {
